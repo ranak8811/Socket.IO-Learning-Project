@@ -4,6 +4,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import { setupUserHandlers } from "./userManager.js";
+import { setupRoomHandlers } from "./roomManager.js";
 
 // ===== ১. এক্সপোর্ট করা ফাংশন =====
 const app = express();
@@ -34,3 +35,4 @@ server.listen(PORT, () => {
 
 // ===== ৯. ব্যবহার ফাংশন কল করুন =====
 setupUserHandlers(io); // ✅ এই লাইনটি নতুন ফাইলে আছে
+setupRoomHandlers(io);
