@@ -30,6 +30,12 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("New user connected:", socket.id);
 
+  socket.on("chat message", (data) => {
+    console.log("Message received: ", data);
+
+    io.emit("chat message", data);
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
