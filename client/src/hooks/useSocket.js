@@ -1,4 +1,4 @@
-// useSocket.js — All socket logic and state in one custom hook
+// useSocket.js — All socket logic, state, error handling, loading
 import { useEffect, useState, useRef, useCallback } from "react";
 import socket from "../utils/socket";
 
@@ -12,6 +12,8 @@ export function useSocket() {
   const [username, setUsername] = useState("");
   const [isJoined, setIsJoined] = useState(false);
   const [currentRoom, setCurrentRoom] = useState("");
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // ===== REFS =====
   const typingTimeoutRef = useRef(null);
@@ -19,28 +21,40 @@ export function useSocket() {
   // ===== ACTIONS =====
   const joinChat = useCallback((name) => {
     if (name.trim() === "") return;
-    setUsername(name);
-    setIsJoined(true);
-    socket.emit("user join", name);
+    setError(null);
+    setIsLoading(true);
+
+    // Small delay to show loading state
+    setTimeout(() => {
+      setUsername(name);
+      setIsJoined(true);
+      setIsLoading(false);
+      socket.emit("user join", name);
+    }, 500);
   }, []);
 
   const joinRoom = useCallback((roomName) => {
     if (roomName.trim() === "") return;
+    setError(null);
+    setMessages([]); // Clear messages when switching rooms
     setCurrentRoom(roomName);
     socket.emit("join room", roomName);
   }, []);
 
-  const sendMessage = useCallback((text) => {
-    if (text.trim() === "" || !currentRoom) return;
+  const sendMessage = useCallback(
+    (text) => {
+      if (text.trim() === "" || !currentRoom) return;
 
-    socket.emit("room message", {
-      text: text,
-      user: username,
-      room: currentRoom,
-      time: new Date().toLocaleTimeString(),
-    });
-    socket.emit("stop typing", username);
-  }, [currentRoom, username]);
+      socket.emit("room message", {
+        text: text,
+        user: username,
+        room: currentRoom,
+        time: new Date().toLocaleTimeString(),
+      });
+      socket.emit("stop typing", username);
+    },
+    [currentRoom, username],
+  );
 
   const startTyping = useCallback(() => {
     socket.emit("typing", username);
@@ -58,10 +72,16 @@ export function useSocket() {
   useEffect(() => {
     socket.on("connect", () => {
       setIsConnected(true);
+      setError(null);
     });
 
     socket.on("disconnect", () => {
       setIsConnected(false);
+      setError("Connection lost. Trying to reconnect...");
+    });
+
+    socket.on("connect_error", () => {
+      setError("Cannot connect to server. Please check if server is running.");
     });
 
     socket.on("room message", (data) => {
@@ -111,6 +131,7 @@ export function useSocket() {
     return () => {
       socket.off("connect");
       socket.off("disconnect");
+      socket.off("connect_error");
       socket.off("room message");
       socket.off("user joined room");
       socket.off("user left room");
@@ -130,6 +151,8 @@ export function useSocket() {
     username,
     isJoined,
     currentRoom,
+    error,
+    isLoading,
     // Actions
     joinChat,
     joinRoom,

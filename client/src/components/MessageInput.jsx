@@ -1,4 +1,4 @@
-// MessageInput.jsx — Message input form
+// MessageInput.jsx — Message input with Enter key support
 import { useState } from "react";
 
 export default function MessageInput({ currentRoom, onSend, onTyping }) {
@@ -24,11 +24,12 @@ export default function MessageInput({ currentRoom, onSend, onTyping }) {
           value={inputMessage}
           onChange={handleChange}
           placeholder={`Message #${currentRoom}...`}
-          className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
         />
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition"
+          disabled={inputMessage.trim() === ""}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
         >
           Send
         </button>
