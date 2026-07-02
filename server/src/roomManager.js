@@ -17,7 +17,8 @@ export function setupRoomHandlers(io) {
 
         io.to(socket.room).emit("user left room", {
           username: users[socket.id],
-          uesrs: getRoomUsers(socket.room),
+          users: getRoomUsers(socket.room),
+          rooms: Object.keys(rooms),
         });
       }
 
@@ -50,6 +51,28 @@ export function setupRoomHandlers(io) {
 
     socket.on("get rooms", () => {
       socket.emit("room list", Object.keys(rooms));
+    });
+
+    // Disconnect handler — cleanup user + room
+    socket.on("disconnect", () => {
+      if (users[socket.id]) {
+        const username = users[socket.id];
+        const currentRoom = socket.room;
+
+        delete users[socket.id];
+
+        if (currentRoom && rooms[currentRoom]) {
+          rooms[currentRoom] = rooms[currentRoom].filter(
+            (id) => id !== socket.id
+          );
+
+          io.to(currentRoom).emit("user left room", {
+            username: username,
+            users: getRoomUsers(currentRoom),
+            rooms: Object.keys(rooms),
+          });
+        }
+      }
     });
   });
 }

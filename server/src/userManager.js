@@ -1,5 +1,5 @@
 // userManager.js - ইউজার ম্যানেজমেন্ট ফাংশন
-const users = {}; // socket.id → username ম্যাপ
+export const users = {}; // socket.id → username ম্যাপ
 
 export function setupUserHandlers(io) {
   io.on("connection", (socket) => {
@@ -30,18 +30,6 @@ export function setupUserHandlers(io) {
       socket.broadcast.emit("user stopped typing");
     });
 
-    // ===== NEW: ডিসকানেকশন হ্যান্ডলার =====
-    socket.on("disconnect", () => {
-      if (users[socket.id]) {
-        const username = users[socket.id];
-        delete users[socket.id];
-        console.log(`${username} left the chat`);
-
-        io.emit("user left", {
-          username: username,
-          users: Object.values(users),
-        });
-      }
-    });
+    // disconnect handler is in roomManager.js
   });
 }
