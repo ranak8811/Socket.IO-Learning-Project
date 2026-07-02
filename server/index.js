@@ -26,18 +26,50 @@ const io = new Server(server, {
   },
 });
 
+const users = {};
+
 // ===== ৬. Socket.IO Connection Handler =====
 io.on("connection", (socket) => {
   console.log("New user connected:", socket.id);
 
+  socket.on("user join", (username) => {
+    users[socket.id] = username;
+
+    console.log(username + " joined the chat");
+
+    io.emit("user joined", {
+      username: username,
+      users: Object.values(users),
+    });
+  });
+
   socket.on("chat message", (data) => {
-    console.log("Message received: ", data);
+    console.log("Message from " + data.user + ":", data.text);
 
     io.emit("chat message", data);
   });
 
+  socket.on("typing", (username) => {
+    socket.broadcast.emit("user typing", username);
+  });
+
+  socket.on("stop typing", (username) => {
+    socket.broadcast.emit("user stopped typing", username);
+  });
+
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    const username = users[socket.id];
+
+    if (username) {
+      console.log(username + " left the chat");
+
+      delete users[socket.id];
+
+      io.emit("user left", {
+        username: username,
+        users: Object.values(users),
+      });
+    }
   });
 });
 
